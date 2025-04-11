@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Clone Demo</title>
+  <style>
+    /* ---------- Base Styles ---------- */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #e5e5e5;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    
+    /* ---------- Dark Theme ---------- */
+    .dark-theme {
+      background-color: #121212;
+      color: #fff;
+    }
+    .dark-theme .header { background-color: #1f1f1f; }
+    .dark-theme .list-item {
+      background-color: #1e1e1e;
+      border-bottom: 1px solid #333;
+      color: #fff;
+    }
+    .dark-theme .list-item .info .subtext { color: #ccc; }
+    .dark-theme .list-item:hover,
+    .dark-theme .settings-dropdown li:hover,
+    .dark-theme .theme-submenu li:hover {
+      background-color: #333;
+    }
+    .dark-theme .chat-input input { background-color: #333; color: #fff; }
+    .dark-theme .chat-input { background-color: #1e1e1e; }
+    .dark-theme .modal-content { background-color: #333; color: #fff; }
+    .dark-theme .message-bubble { color: #fff; }
+    
+    /* ---------- Header ---------- */
+    .header {
+      background-color: #075e54;
+      color: white;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .header h2 { margin: 0; font-size: 20px; }
+    
+    /* ---------- Settings Dropdown ---------- */
+    .settings-btn {
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+      position: relative;
+    }
+    .settings-dropdown {
+      position: absolute;
+      top: 45px;
+      right: 15px;
+      background: #fff;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      border-radius: 4px;
+      display: none;
+      z-index: 1000;
+    }
+    .settings-dropdown ul { list-style: none; margin: 0; padding: 0; }
+    .settings-dropdown li {
+      padding: 10px 15px;
+      cursor: pointer;
+      white-space: nowrap;
+      color: #000;
+      transition: background-color 0.3s;
+    }
+    .settings-dropdown li:hover { background-color: #f0f0f0; }
+    /* "Clear Chat" option added below */
+    .settings-dropdown li.clear-chat {
+      border-top: 1px solid #ddd;
+      margin-top: 5px;
+    }
+    .theme-submenu {
+      display: none;
+      list-style: none;
+      padding-left: 15px;
+      background: #f9f9f9;
+    }
+    .theme-submenu li { padding: 8px 15px; cursor: pointer; color: #000; }
+    .theme-submenu li:hover { background-color: #eee; }
+    
+    /* ---------- Main Content Area ---------- */
+    .main-content {
+      position: absolute;
+      top: 50px;
+      bottom: 60px;
+      left: 0;
+      right: 0;
+      overflow-y: auto;
+    }
+    .view { display: none; padding: 10px; }
+    .view.active { display: block; }
+    
+    /* ---------- List Items for Chats, Status & Calls ---------- */
+    .list-item {
+      display: flex;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      background-color: #fff;
+    }
+    .list-item:hover { background-color: #f5f5f5; }
+    .list-item img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .list-item .info { flex: 1; }
+    .list-item .info .name { font-weight: bold; font-size: 16px; margin-bottom: 3px; }
+    .list-item .info .subtext { font-size: 13px; color: #555; }
+    
+    /* ---------- Chat Window ---------- */
+    .chat-window {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      background-color: #fff;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 500;
+    }
+    .chat-header {
+      background-color: #075e54;
+      color: white;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-header .back-btn { font-size: 18px; color: white; display: inline-block; margin-right: 10px; }
+    .chat-header .contact-info {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .chat-header .contact-info img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .chat-body {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background-size: cover;
+      background-position: center;
+      transition: background-color 0.3s;
+    }
+    .message-bubble {
+      display: block;
+      max-width: 80%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      line-height: 1.4;
+      position: relative;
+      color: inherit;
+    }
+    .sent { background-color: #dcf8c6; align-self: flex-end; }
+    .received {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      align-self: flex-start;
+    }
+    .message-text { display: inline; }
+    .message-meta {
+      display: inline-block;
+      float: right;
+      font-size: 10px;
+      color: gray;
+      margin-left: 10px;
+    }
+    .blue-ticks { color: #34B7F1; margin-left: 5px; font-size: 10px; }
+    .chat-input {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-top: 1px solid #ddd;
+      background-color: #f8f8f8;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      background-color: #fff;
+      border-radius: 20px;
+      margin-right: 8px;
+      color: #000;
+      border: none;
+    }
+    .chat-input input:focus { outline: none; }
+    .chat-input button {
+      background-color: #075e54;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-input button svg { fill: white; width: 20px; height: 20px; }
+    
+    /* ---------- Floating Add Contact Button (Chats Tab) ---------- */
+    .fab {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: #075e54;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 30px;
+      z-index: 1000;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    /* ---------- Bottom Navigation Bar ---------- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background-color: #075e54;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+    }
+    .bottom-nav button {
+      color: white;
+      background: none;
+      border: none;
+      font-size: 16px;
+      flex: 1;
+    }
+    .bottom-nav button.active {
+      font-weight: bold;
+    }
+    
+    /* ---------- Modals ---------- */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+      text-align: center;
+    }
+    .modal-content img { max-width: 100%; display: block; margin: 0 auto; }
+    /* Profile Modal Content */
+    .profile-modal-content img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin-bottom: 15px;
+    }
+    .profile-modal-content h3 { margin: 5px 0; color: inherit; }
+    .profile-modal-content p { margin: 0; color: inherit; }
+    .profile-modal-content button { margin-top: 10px; padding: 8px 12px; }
+    
+    /* ---------- Hidden File Inputs ---------- */
+    #bgInput, #profileImageInput { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Header with Settings -->
+  <div class="header">
+    <h2>WhatsApp</h2>
+    <span class="settings-btn" onclick="toggleSettings(event)">⋮</span>
+    <!-- Settings Dropdown -->
+    <div class="settings-dropdown" id="settingsDropdown">
+      <ul>
+        <li onclick="triggerBGUpload()">Add BG Wallpaper</li>
+        <li onclick="toggleThemeSubmenu(event)">Theme ▸
+          <ul class="theme-submenu" id="themeSubmenu">
+            <li onclick="setTheme('white')">White</li>
+            <li onclick="setTheme('black')">Black</li>
+          </ul>
+        </li>
+        <li class="clear-chat" onclick="clearChatMessages()">Clear Chat</li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Chats View (4 chat items + Self Chat) -->
+    <div class="view active" id="chatsView">
+      <div class="list-item" onclick="openChat('John Doe', 'https://via.placeholder.com/150', 'John Doe', '9876543210')">
+        <img src="https://via.placeholder.com/150" alt="Profile" onclick="openSquareModal(event, this.src)" />
+        <div class="info">
+          <div class="name">John Doe</div>
+          <div class="subtext">Hey, what's up?</div>
+        </div>
+      </div>
+      <div class="list-item" onclick="openChat('Jane Smith', 'https://via.placeholder.com/150/FF0000', 'Jane Smith', '1234567890')">
+        <img src="https://via.placeholder.com/150/FF0000" alt="Profile" onclick="openSquareModal(event, this.src)" />
+        <div class="info">
+          <div class="name">Jane Smith</div>
+          <div class="subtext">Are you coming to the party?</div>
+        </div>
+      </div>
+      <div class="list-item" onclick="openChat('Alice Kumar', 'https://via.placeholder.com/150/00FF00', 'Alice Kumar', '9876512340')">
+        <img src="https://via.placeholder.com/150/00FF00" alt="Profile" onclick="openSquareModal(event, this.src)" />
+        <div class="info">
+          <div class="name">Alice Kumar</div>
+          <div class="subtext">Let's catch up soon!</div>
+        </div>
+      </div>
+      <div class="list-item" onclick="openChat('Rohan Singh', 'https://via.placeholder.com/150/0000FF', 'Rohan Singh', '9123456780')">
+        <img src="https://via.placeholder.com/150/0000FF" alt="Profile" onclick="openSquareModal(event, this.src)" />
+        <div class="info">
+          <div class="name">Rohan Singh</div>
+          <div class="subtext">Meeting at 5 PM.</div>
+        </div>
+      </div>
+      <!-- Self Chat Option -->
+      <div class="list-item" onclick="openChat('Self Chat', 'https://via.placeholder.com/150/AAAAAA', 'Self Chat', 'N/A')">
+        <img src="https://via.placeholder.com/150/AAAAAA" alt="Self Chat" onclick="openSquareModal(event, this.src)" />
+        <div class="info">
+          <div class="name">Self Chat</div>
+          <div class="subtext">Talk to yourself</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Status View -->
+    <div class="view" id="statusView">
+      <div class="list-item">
+        <img src="https://via.placeholder.com/150/00FF00" alt="Status" />
+        <div class="info">
+          <div class="name">My Status</div>
+          <div class="subtext">Tap to add status update</div>
+        </div>
+      </div>
+      <div class="list-item">
+        <img src="https://via.placeholder.com/150/FF00FF" alt="Status" />
+        <div class="info">
+          <div class="name">Sonal Verma</div>
+          <div class="subtext">Feeling happy today!</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Calls View -->
+    <div class="view" id="callsView">
+      <div class="list-item">
+        <img src="https://via.placeholder.com/150/0000FF" alt="Call" />
+        <div class="info">
+          <div class="name">John Doe</div>
+          <div class="subtext">Missed call - Yesterday, 5:30 PM</div>
+        </div>
+      </div>
+      <div class="list-item">
+        <img src="https://via.placeholder.com/150/FF0000" alt="Call" />
+        <div class="info">
+          <div class="name">Jane Smith</div>
+          <div class="subtext">Incoming - Today, 10:15 AM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Floating Add Contact Button (Chats Tab) -->
+  <div class="fab" id="addContactFab" onclick="openAddContactModal()">+</div>
+  
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-nav" id="bottomNav">
+    <button id="navChats" class="active" onclick="switchView('chats')">Chats</button>
+    <button id="navStatus" onclick="switchView('status')">Status</button>
+    <button id="navCalls" onclick="switchView('calls')">Calls</button>
+  </div>
+  
+  <!-- Chat Window (Overlay) -->
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+      <span class="back-btn" onclick="closeChat()">←</span>
+      <div class="contact-info" onclick="openProfileModal()">
+        <img id="chatProfileImg" src="https://via.placeholder.com/150" alt="Profile" />
+        <div>
+          <div id="chatUserName">Contact Name</div>
+          <div style="font-size:12px;">Online</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button title="Voice Call">📞</button>
+        <button title="Video Call">📹</button>
+        <button class="settings-btn" onclick="toggleSettings(event)">⋮</button>
+      </div>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <!-- Chat window initially empty for self chat or any conversation -->
+    </div>
+    <div class="chat-input">
+      <button class="attach-btn" title="Attach">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path fill="white" d="M18.5,6.5l-7,7a3,3,0,0,1-4.24,0A3,3,0,0,1,7,11.5l6-6a1.5,1.5,0,0,1,2.12,2.12L10.12,11.5a.5.5,0,0,0-.71.71l6,6a2.5,2.5,0,1,0,3.54-3.54Z"/>
+        </svg>
+      </button>
+      <input type="text" id="messageInput" placeholder="Type a message" />
+      <button onclick="sendMessage()">
+        <svg viewBox="0 0 24 24">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Hidden File Inputs -->
+  <input type="file" id="bgInput" accept="image/*" />
+  <input type="file" id="profileImageInput" accept="image/*" onchange="loadCropImage(event)" />
+  
+  <!-- Modal for Square Profile Image (Chat List) -->
+  <div class="modal" id="squareModal" onclick="closeModal('squareModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <img id="squareModalImg" src="" alt="Profile Square" style="width:300px; height:300px; object-fit: cover;" />
+    </div>
+  </div>
+  
+  <!-- Profile Modal (from Chat Header) -->
+  <div class="modal" id="profileModal" onclick="closeModal('profileModal')">
+    <div class="modal-content profile-modal-content" onclick="event.stopPropagation()">
+      <img id="profileModalImg" src="" alt="Profile" />
+      <h3 id="profileModalName">Name</h3>
+      <p id="profileModalMobile">Mobile Number</p>
+      <button onclick="openCropModal()">Change Photo</button>
+    </div>
+  </div>
+  
+  <!-- Crop Modal for Profile Photo -->
+  <div class="modal" id="cropModal" onclick="closeModal('cropModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h3>Crop Your Photo</h3>
+      <input type="file" id="profileImageInput" accept="image/*" onchange="loadCropImage(event)" />
+      <br />
+      <img id="cropPreview" src="" alt="Crop Preview" style="display:none; max-height:300px; object-fit:contain;" />
+      <br />
+      <button id="cropButton" style="display:none;" onclick="cropAndSave()">Crop & Save</button>
+    </div>
+  </div>
+  
+  <!-- Add Contact Modal -->
+  <div class="modal" id="addContactModal" onclick="closeModal('addContactModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h3>Add New Contact</h3>
+      <input type="text" id="newContactName" placeholder="Name" style="width:80%; padding:8px; margin-bottom:8px;" />
+      <br />
+      <input type="text" id="newContactMobile" placeholder="Mobile Number" style="width:80%; padding:8px; margin-bottom:8px;" />
+      <br />
+      <input type="file" id="newContactImageInput" accept="image/*" onchange="loadNewContactImage(event)" />
+      <br />
+      <img id="newContactPreview" src="" alt="Contact Preview" style="display:none; width:80px; height:80px; object-fit:cover; border-radius:50%; margin-bottom:8px;" />
+      <br />
+      <button onclick="addContact()" style="padding:8px 12px;">Add Contact</button>
+    </div>
+  </div>
+  
+  <script>
+    let currentTheme = 'white';
+    
+    // Switch between bottom nav views
+    function switchView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(view + "View").classList.add('active');
+      // Update bottom nav active state
+      document.querySelectorAll('.bottom-nav button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('nav' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+      // Show FAB only in chats view
+      document.getElementById('addContactFab').style.display = (view === 'chats') ? 'flex' : 'none';
+    }
+    
+    // Open chat window and set contact info; hide bottom nav
+    function openChat(name, imgSrc, fullName, mobile) {
+      document.getElementById('chatWindow').style.display = 'flex';
+      document.querySelector('.chat-header .back-btn').style.display = 'inline-block';
+      document.getElementById('chatUserName').innerText = name;
+      document.getElementById('chatProfileImg').src = imgSrc;
+      // Set profile modal info
+      document.getElementById('profileModalImg').src = imgSrc;
+      document.getElementById('profileModalName').innerText = fullName;
+      document.getElementById('profileModalMobile').innerText = mobile;
+      // Hide bottom nav when inside chat
+      document.getElementById('bottomNav').style.display = 'none';
+    }
+    
+    // Close chat window and show bottom nav
+    function closeChat() {
+      document.getElementById('chatWindow').style.display = 'none';
+      document.getElementById('bottomNav').style.display = 'flex';
+    }
+    
+    // Send message (one-line bubble with inline meta info)
+    function sendMessage() {
+      const inputField = document.getElementById('messageInput');
+      const text = inputField.value.trim();
+      if (text !== "") {
+        const bubble = document.createElement('div');
+        bubble.classList.add('message-bubble', 'sent');
+        const now = new Date();
+        let hrs = now.getHours(), mins = now.getMinutes();
+        hrs = hrs < 10 ? "0" + hrs : hrs;
+        mins = mins < 10 ? "0" + mins : mins;
+        bubble.innerHTML = `<span class="message-text">${text}</span><span class="message-meta">${hrs}:${mins}<span class="blue-ticks">✓✓</span></span>`;
+        document.getElementById('chatBody').appendChild(bubble);
+        inputField.value = "";
+        document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
+      }
+    }
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') sendMessage();
+    });
+    
+    // Toggle Settings Dropdown
+    function toggleSettings(event) {
+      event.stopPropagation();
+      const dropdown = document.getElementById('settingsDropdown');
+      dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+    }
+    
+    // Toggle Theme Submenu
+    function toggleThemeSubmenu(event) {
+      event.stopPropagation();
+      const submenu = document.getElementById('themeSubmenu');
+      submenu.style.display = (submenu.style.display === 'block') ? 'none' : 'block';
+    }
+    
+    // Set theme: white or black
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.getElementById('settingsDropdown').style.display = 'none';
+      if (theme === 'white') {
+        document.body.classList.remove('dark-theme');
+      } else {
+        document.body.classList.add('dark-theme');
+      }
+    }
+    
+    // Clear Chat Messages
+    function clearChatMessages() {
+      document.getElementById('chatBody').innerHTML = "";
+      document.getElementById('settingsDropdown').style.display = 'none';
+    }
+    
+    // Trigger file upload for BG wallpaper
+    function triggerBGUpload() {
+      document.getElementById('settingsDropdown').style.display = 'none';
+      document.getElementById('bgInput').click();
+    }
+    document.getElementById('bgInput').addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('chatBody').style.backgroundImage = `url(${e.target.result})`;
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    // Modal functions for square profile image (Chat List)
+    function openSquareModal(event, src) {
+      event.stopPropagation();
+      document.getElementById('squareModalImg').src = src;
+      document.getElementById('squareModal').style.display = 'flex';
+    }
+    function openProfileModal() {
+      document.getElementById('profileModal').style.display = 'flex';
+    }
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+    
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('settingsDropdown');
+      if (!dropdown.contains(event.target)) dropdown.style.display = 'none';
+      const submenu = document.getElementById('themeSubmenu');
+      if (submenu) submenu.style.display = 'none';
+    });
+    
+    // ----- Profile Photo Cropping Section -----
+    function openCropModal() {
+      document.getElementById('cropModal').style.display = 'flex';
+    }
+    function loadCropImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const cropPreview = document.getElementById('cropPreview');
+          cropPreview.src = e.target.result;
+          cropPreview.style.display = 'block';
+          document.getElementById('cropButton').style.display = 'inline-block';
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+    function cropAndSave() {
+      const cropImg = document.getElementById('cropPreview');
+      if (!cropImg.src) return;
+      const tempImg = new Image();
+      tempImg.src = cropImg.src;
+      tempImg.onload = function() {
+        const side = Math.min(tempImg.width, tempImg.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = side;
+        canvas.height = side;
+        const ctx = canvas.getContext('2d');
+        const sx = (tempImg.width - side) / 2, sy = (tempImg.height - side) / 2;
+        ctx.drawImage(tempImg, sx, sy, side, side, 0, 0, side, side);
+        const croppedUrl = canvas.toDataURL('image/png');
+        document.getElementById('chatProfileImg').src = croppedUrl;
+        document.getElementById('profileModalImg').src = croppedUrl;
+        document.getElementById('cropModal').style.display = 'none';
+        document.getElementById('cropPreview').style.display = 'none';
+        document.getElementById('cropButton').style.display = 'none';
+      }
+    }
+    
+    // ----- Add Contact Modal -----
+    function openAddContactModal() {
+      document.getElementById('addContactModal').style.display = 'flex';
+    }
+    function loadNewContactImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('newContactPreview');
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+    function addContact() {
+      const name = document.getElementById('newContactName').value.trim();
+      const mobile = document.getElementById('newContactMobile').value.trim();
+      const imgSrc = document.getElementById('newContactPreview').src;
+      if (name && mobile && imgSrc) {
+        const li = document.createElement('div');
+        li.className = "list-item";
+        li.onclick = function() { openChat(name, imgSrc, name, mobile); };
+        li.innerHTML = `
+          <img src="${imgSrc}" alt="Profile" onclick="openSquareModal(event, '${imgSrc}')" />
+          <div class="info">
+            <div class="name">${name}</div>
+            <div class="subtext">New contact</div>
+          </div>`;
+        document.getElementById('chatsView').appendChild(li);
+        document.getElementById('newContactName').value = "";
+        document.getElementById('newContactMobile').value = "";
+        document.getElementById('newContactPreview').src = "";
+        document.getElementById('newContactPreview').style.display = 'none';
+        closeModal('addContactModal');
+      } else {
+        alert("Please enter all details and select a profile image.");
+      }
+    }
+  </script>
+</body>
+</html>
